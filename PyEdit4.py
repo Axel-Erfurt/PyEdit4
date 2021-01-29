@@ -172,11 +172,12 @@ class MyWindow(Gtk.Window):
         # Settings for SourceView Find
         self.searchbar = builder.get_object("searchbar")
         self.search_settings = GtkSource.SearchSettings()
-        self.searchbar.bind_property("text", self.search_settings, "search-text")
+        #self.searchbar.bind_property("text", self.search_settings, "search-text")
         self.search_settings.set_search_text("initial highlight")
         self.search_settings.set_wrap_around(True)
         self.search_context = GtkSource.SearchContext.new(self.buffer, self.search_settings)
         self.search_mark = Gtk.TextMark()
+        self.searchbar.connect("activate", self.find_next_match_from_entry)
         
         # styles
         self.stylemanager = GtkSource.StyleSchemeManager()
@@ -586,6 +587,16 @@ class MyWindow(Gtk.Window):
             next_mark = self.buffer.get_insert()
             next_iter = self.buffer.get_iter_at_mark(next_mark)
             self.buffer.delete(iter,next_iter)
+            
+    def find_next_match_from_entry(self, *args):
+        search_str =  self.searchbar.get_text()
+        start_iter =  self.buffer.get_start_iter()
+        found = start_iter.forward_search(search_str,0, None) 
+        if found:
+           match_start,match_end = found #add this line to get match_start and match_end
+           self.buffer.select_range(match_start,match_end)
+           self.editor.scroll_to_iter(match_end, 0.1, True, 0.0, 0.5)
+           self.editor.grab_focus()
 
     def find_next_match(self, *args):
         if self.buffer.get_has_selection():
