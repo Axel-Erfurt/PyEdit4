@@ -1,0 +1,31 @@
+#myeditor {
+    font-size: 9pt;
+    font-family: Noto Sans;
+    border: 0px;
+}
+window {
+    background-color: #e9e9e9;
+}
+viewport {
+    border: 0px;
+}
+entry {
+    background-color: #e9e9e9;
+}
+headerbar.titlebar {
+    font-size: 11pt;
+    font-family: Noto Sans;
+}
+#statuslabel {
+    font-size: 8pt;
+    font-family: Noto Sans;
+    border: 0px;
+    color: #555753;
+}
+#openbutton:hover, #runbutton:hover,
+#savebutton:hover, #saveasbutton:hover,
+#showfindbutton:hover, #newbutton:hover,
+#replacebutton:hover, #replaceallbutton:hover, #filemanagerbutton:hover
+{
+    background-image: linear-gradient(0deg, rgba(114,159,207,1) 0%, rgba(191,221,246,1) 100%);
+}
