@@ -11,7 +11,7 @@ gi.require_version("Gdk", "3.0")
 gi.require_version('Keybinder', '3.0')
 gi.require_version('GtkSource', '3.0')
 gi.require_version('Vte', '2.91')
-from gi.repository import Gtk, Gdk, GLib, GtkSource, GObject, Vte
+from gi.repository import Gtk, Gdk, GLib, GtkSource, GObject, Vte, GdkPixbuf
 import sys
 from subprocess import run
 from os import path, environ
@@ -86,7 +86,7 @@ class MyWindow(Gtk.Window):
         self.win = builder.get_object("window")
         
         self.q_icon = builder.get_object("question_icon")
-        self.md_icon = builder.get_object("question_icon")
+        self.about_icon = builder.get_object("about_icon")
         
         # headerbar buttons
         self.btn_save = builder.get_object("btn_save")
@@ -184,6 +184,10 @@ class MyWindow(Gtk.Window):
         self.btn_replace_all = builder.get_object("btn_replace_all")
         self.btn_replace_all.connect('clicked', self.replace_all)
         self.btn_replace_all.set_relief(Gtk.ReliefStyle.NONE)
+        
+        self.btn_about = builder.get_object("btn_about")
+        self.btn_about.connect('clicked', self.on_about)
+        self.btn_about.set_relief(Gtk.ReliefStyle.NONE)
         
         self.headerbar = builder.get_object("headerbar")
         
@@ -593,7 +597,27 @@ class MyWindow(Gtk.Window):
         iter = self.buffer.get_iter_at_mark(mark)        
         self.editor.scroll_to_iter(iter, 0.0, True, 0.0, 0.0)
         
+    def on_about(self, *args):
+        dialog = Gtk.AboutDialog()
+        dialog.set_title("PyEdit4")
+        dialog.set_version("1.0")
+        dialog.set_program_name("PyEdit4")
+        dialog.set_authors(["Axel Schneider"])
+        dialog.set_website("https://github.com/Axel-Erfurt/PyEdit4")
+        dialog.set_website_label("github Project Site")
+        dialog.set_comments("Python Gtk+3 Editor")
+        dialog.set_copyright("© 2021 Axel Schneider")
+        dialog.set_license_type(Gtk.License(12))
+        dialog.set_wrap_license(True)
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale("pyedit4.png", 128, 128, True)
+        dialog.set_logo(pixbuf)
+        dialog.set_modal(True)
+        dialog.connect('response', lambda dialog, data: dialog.destroy())
+        dialog.show_all()
         
+                
+                
 if __name__ == "__main__":
     w = MyWindow()
     w.main(sys.argv)
+    
