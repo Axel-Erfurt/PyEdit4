@@ -1,0 +1,3 @@
+#!/bin/sh
+
+pyflakes $1 2>&1 | zenity --text-info --title CodeCheck --width=1000 --height=600
