@@ -314,6 +314,8 @@ class MyWindow(Gtk.Window):
             self.is_changed = False
             self.lastfiles.append(myfile)
             self.ordered_list()
+            self.terminal.reset(True, True)
+            #self.terminal.feed_child([13])
         
     ### get editor text
     def get_buffer(self):
@@ -646,7 +648,6 @@ class MyWindow(Gtk.Window):
         if self.config.has_section("window"):
             x, y, w, h = (self.config['window']['left'], self.config['window']['top'], 
                                 self.config['window']['width'], self.config['window']['height'])
-            print( x, y, w, h)
             self.win.resize(int(w), int(h))
             self.win.move(int(x), int(y))
 
@@ -655,7 +656,6 @@ class MyWindow(Gtk.Window):
         if self.config.has_section("files"):
             self.lastfiles = self.config['files']['lastfiles'].split(",")
             for line in self.lastfiles:
-                print(line)
                 self.combo_recent.append_text(line)
             
     def write_settings(self, *args):
