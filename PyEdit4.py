@@ -22,6 +22,8 @@ from shutil import copyfile
 dnd_list = [Gtk.TargetEntry.new("text/uri-list", 0, 80)]
 
 warnings.filterwarnings("ignore")
+import configparser
+
 
 class Terminal(Vte.Terminal):
     """Defines a simple terminal"""
@@ -66,6 +68,14 @@ class MyWindow(Gtk.Window):
 
     def main(self, argv):
         
+        self.config = configparser.ConfigParser()
+        self.config.read('config.conf')
+        if not self.config.has_section("window"):
+            self.config.add_section("window")
+        if not self.config.has_section("files"):
+            self.config.add_section("lastfiles")
+        self.lastfiles = []
+        self.new_text = "#!/usr/bin/python3\n# -*- coding: utf-8 -*-\n\n"
         self.current_file = ""
         self.current_filename = ""
         self.current_folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOCUMENTS) ###path.expanduser("~")
@@ -105,6 +115,11 @@ class MyWindow(Gtk.Window):
         self.btn_open.connect('clicked', self.on_open)
         self.btn_open.set_relief(Gtk.ReliefStyle.NONE)
         
+        # recent files
+        self.combo_recent = builder.get_object("combo_recent")
+        self.combo_recent.connect('changed', self.on_open_recent)
+        
+        
         self.btn_run = builder.get_object("btn_run")
         self.btn_run.connect('clicked', self.on_run)
         self.btn_run.set_relief(Gtk.ReliefStyle.NONE)
@@ -112,6 +127,11 @@ class MyWindow(Gtk.Window):
         self.btn_fm = builder.get_object("btn_filemanager")
         self.btn_fm.connect('clicked', self.on_fm)
         self.btn_fm.set_relief(Gtk.ReliefStyle.NONE)
+        
+        # check_code
+        self.btn_check_code = builder.get_object("btn_check_code")
+        self.btn_check_code.connect('clicked', self.on_check_code)
+        self.btn_check_code.set_relief(Gtk.ReliefStyle.NONE)
         
         # entry go to line
         self.entry_goto = builder.get_object("entry_goto")
@@ -125,7 +145,7 @@ class MyWindow(Gtk.Window):
         
         # buffer
         self.buffer = GtkSource.Buffer()
-        self.buffer.set_text("#!/usr/bin/python3\n# -*- coding: utf-8 -*-\n\n")
+        self.buffer.set_text(self.new_text)
         self.editor.set_buffer(self.buffer)
         self.buffer.connect('changed', self.is_modified)
         
@@ -213,6 +233,7 @@ class MyWindow(Gtk.Window):
         self.win.connect("delete-event", self.on_close)
         self.win.resize(900, 800)
         self.win.move(0, 0)
+        self.read_settings()
         self.win.show_all()
         ### focus on editor
         self.findbox.set_visible(False)
@@ -366,7 +387,7 @@ class MyWindow(Gtk.Window):
     def on_new_file(self, *args):
         if self.is_changed:
             self.maybe_saved()
-            self.buffer.set_text("#!/usr/bin/python3\n# -*- coding: utf-8 -*-\n\n")
+            self.buffer.set_text(self.new_text)
             self.editor.set_buffer(self.buffer)
             self.current_file = ""
             self.current_filename = ""
@@ -374,7 +395,7 @@ class MyWindow(Gtk.Window):
             self.headerbar.set_subtitle("New")
             self.is_changed = False
         else:
-            self.buffer.set_text("#!/usr/bin/python3\n# -*- coding: utf-8 -*-\n\n")
+            self.buffer.set_text(self.new_text)
             self.editor.set_buffer(self.buffer)
             self.current_file = ""
             self.current_filename = ""
@@ -496,6 +517,8 @@ class MyWindow(Gtk.Window):
         
     ### close window
     def on_close(self, *args):
+        print("goodbye ...")
+        self.write_settings()
         print(f"{self.current_file} changed: {self.is_changed}")
         if self.is_changed:
             b = self.maybe_saved()
@@ -615,8 +638,48 @@ class MyWindow(Gtk.Window):
         dialog.connect('response', lambda dialog, data: dialog.destroy())
         dialog.show_all()
         
-                
-                
+    def read_settings(self, *args):
+        if self.config.has_section("window"):
+            x, y, w, h = (self.config['window']['left'], self.config['window']['top'], 
+                                self.config['window']['width'], self.config['window']['height'])
+            print( x, y, w, h)
+            self.win.resize(int(w), int(h))
+            self.win.move(int(x), int(y))
+
+        self.combo_recent.append_text("recent Files ...")
+        self.combo_recent.set_active(0)
+        if self.config.has_section("files"):
+            self.lastfiles = self.config['files']['lastfiles'].split(",")
+            for line in self.lastfiles:
+                print(line)
+                self.combo_recent.append_text(line)
+            
+    def write_settings(self, *args):
+        self.config['window']['left'] = str(self.win.get_position()[0])
+        self.config['window']['top'] = str(self.win.get_position()[1])
+        self.config['window']['width'] = str(self.win.get_size()[0])
+        self.config['window']['height'] = str(self.win.get_size()[1])
+        self.config['files']['lastfiles'] = ",".join(self.lastfiles)
+        with open('config.conf', 'w') as configfile:
+            self.config.write(configfile)
+
+    def on_open_recent(self, *args):
+        if not self.combo_recent.get_active_text() == "recent Files ...":
+            if self.is_changed:
+                self.maybe_saved()
+            myfile = self.combo_recent.get_active_text()
+            self.open_file(myfile)
+            
+    def on_check_code(self, *args):
+        #if not self.get_buffer() == self.new_text:
+        if not self.current_file == "":
+            wd = path.dirname(sys.argv[0])
+            check = path.join(wd, "checkmycode")
+            cmd = f"{check} '{self.current_file}'"
+            run(cmd, shell = True)
+        else:
+            self.status_label.set_text("no code!")
+
 if __name__ == "__main__":
     w = MyWindow()
     w.main(sys.argv)
