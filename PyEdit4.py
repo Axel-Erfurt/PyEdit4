@@ -300,22 +300,23 @@ class MyWindow(Gtk.Window):
                 
     def open_file(self, myfile, *args):
         with open(myfile, 'r') as f:
-            data = f.read()
-            self.buffer.set_text(data)           
-            self.editor.set_buffer(self.buffer)
-            self.current_file = myfile
-            self.current_filename = myfile.rpartition("/")[2]
-            self.current_folder = path.dirname(myfile)
-            f.close()
-            self.headerbar.set_subtitle(myfile)
-            self.status_label.set_text(f"'{myfile}' loaded")
-            self.headerbar.set_title("PyEdit4")
-            self.editor.grab_focus()
-            self.is_changed = False
-            self.lastfiles.append(myfile)
-            self.ordered_list()
-            self.terminal.reset(True, True)
-            #self.terminal.feed_child([13])
+            if myfile:
+                data = f.read()
+                self.buffer.set_text(data)           
+                self.editor.set_buffer(self.buffer)
+                self.current_file = myfile
+                self.current_filename = myfile.rpartition("/")[2]
+                self.current_folder = path.dirname(myfile)
+                f.close()
+                self.headerbar.set_subtitle(myfile)
+                self.status_label.set_text(f"'{myfile}' loaded")
+                self.headerbar.set_title("PyEdit4")
+                self.editor.grab_focus()
+                self.is_changed = False
+                self.lastfiles.append(myfile)
+                self.ordered_list()
+                self.terminal.reset(True, True)
+                #self.terminal.feed_child([13])
         
     ### get editor text
     def get_buffer(self):
@@ -655,6 +656,7 @@ class MyWindow(Gtk.Window):
         self.combo_recent.set_active(0)
         if self.config.has_section("files"):
             self.lastfiles = self.config['files']['lastfiles'].split(",")
+            self.lastfiles = [x for x in self.lastfiles if x]
             for line in self.lastfiles:
                 self.combo_recent.append_text(line)
             
@@ -672,7 +674,8 @@ class MyWindow(Gtk.Window):
             if self.is_changed:
                 self.maybe_saved()
             myfile = self.combo_recent.get_active_text()
-            self.open_file(myfile)
+            if not myfile == None:
+                self.open_file(myfile)
             
     def on_check_code(self, *args):
         #if not self.get_buffer() == self.new_text:
@@ -685,6 +688,7 @@ class MyWindow(Gtk.Window):
             self.status_label.set_text("no code!")
             
     def ordered_list(self, *args):
+        self.lastfiles = [x for x in self.lastfiles if x]
         self.lastfiles = self.ordered_set(self.lastfiles)
         self.combo_recent.remove_all()
         self.combo_recent.append_text("recent Files ...")
