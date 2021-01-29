@@ -312,6 +312,8 @@ class MyWindow(Gtk.Window):
             self.headerbar.set_title("PyEdit4")
             self.editor.grab_focus()
             self.is_changed = False
+            self.lastfiles.append(myfile)
+            self.ordered_list()
         
     ### get editor text
     def get_buffer(self):
@@ -473,6 +475,8 @@ class MyWindow(Gtk.Window):
                 self.is_changed = False
                 self.headerbar.set_title("PyEdit4")
                 self.headerbar.set_subtitle(myfile)
+                self.lastfiles.append(myfile)
+                self.ordered_list()
                 
     ### save current file            
     def save_file(self, *args):
@@ -679,6 +683,24 @@ class MyWindow(Gtk.Window):
             run(cmd, shell = True)
         else:
             self.status_label.set_text("no code!")
+            
+    def ordered_list(self, *args):
+        self.lastfiles = self.ordered_set(self.lastfiles)
+        self.combo_recent.remove_all()
+        self.combo_recent.append_text("recent Files ...")
+        self.combo_recent.set_active(0)
+        for line in self.lastfiles:
+            print(line)
+            self.combo_recent.append_text(line)        
+        
+    def ordered_set(self, in_list):
+        out_list = []
+        added = set()
+        for val in in_list:
+            if not val in added:
+                out_list.append(val)
+                added.add(val)
+        return out_list
 
 if __name__ == "__main__":
     w = MyWindow()
