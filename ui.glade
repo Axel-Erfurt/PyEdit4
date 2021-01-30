@@ -7,10 +7,24 @@
     <property name="visible">True</property>
     <property name="can_focus">False</property>
   </object>
+  <object class="GtkMenu">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+  </object>
   <object class="GtkImage" id="btn_check">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="icon_name">ok</property>
+  </object>
+  <object class="GtkImage" id="btn_style_up">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">down</property>
+  </object>
+  <object class="GtkImage" id="btn_up">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">down</property>
   </object>
   <object class="GtkListStore" id="liststore1">
     <columns>
@@ -100,29 +114,17 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkBox">
+              <object class="GtkBox" id="btn_box">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
-                  <object class="GtkComboBoxText" id="combo_recent">
-                    <property name="name">recentcombo</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">recent files list</property>
-                    <property name="margin_top">1</property>
-                    <property name="margin_bottom">4</property>
-                    <property name="resize_mode">immediate</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
+                  <placeholder/>
                 </child>
                 <child>
                   <object class="GtkSeparator">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_left">60</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -131,76 +133,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="btn_check_code">
-                    <property name="label" translatable="yes">check code</property>
-                    <property name="name">checkbutton</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="margin_left">20</property>
-                    <property name="image">btn_check</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkComboBox" id="style_box">
-                    <property name="name">stylescombo</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text">Styles
-
-1: kate
-2: builder
-3: builder-dark
-4: classic
-5: tango
-6: styles
-7: cobalt
-8: solarized-light
-9: solarized-dark
-10: classic</property>
-                    <property name="margin_bottom">4</property>
-                    <property name="model">liststore1</property>
-                    <property name="active">1</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="style"/>
-                      <attributes>
-                        <attribute name="text">0</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="pack_type">end</property>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="btn_filemanager">
-                    <property name="name">filemanagerbutton</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="tooltip_text" translatable="yes">open script folder</property>
-                    <child>
-                      <object class="GtkImage" id="fm_icon">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="icon_name">file-manager</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="pack_type">end</property>
-                    <property name="position">3</property>
-                  </packing>
+                  <placeholder/>
                 </child>
                 <child>
                   <object class="GtkButton" id="btn_about">
@@ -208,6 +141,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="margin_left">4</property>
                     <child>
                       <object class="GtkImage" id="about_icon">
                         <property name="visible">True</property>
@@ -221,6 +155,46 @@
                     <property name="fill">True</property>
                     <property name="pack_type">end</property>
                     <property name="position">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btn_check_code">
+                    <property name="label" translatable="yes">check code</property>
+                    <property name="name">checkbutton</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">check code with pyflakes</property>
+                    <property name="margin_left">20</property>
+                    <property name="image">btn_check</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">5</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btn_filemanager">
+                    <property name="name">filemanagerbutton</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">open script folder</property>
+                    <property name="margin_left">4</property>
+                    <child>
+                      <object class="GtkImage" id="fm_icon">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">file-manager</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="pack_type">end</property>
+                    <property name="position">6</property>
                   </packing>
                 </child>
               </object>
@@ -301,7 +275,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">3</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -322,7 +296,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">4</property>
+                <property name="position">3</property>
               </packing>
             </child>
             <child>
@@ -337,6 +311,28 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="stock">gtk-find-and-replace</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="btn_color">
+                <property name="name">colorbutton</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">color picker</property>
+                <property name="margin_left">10</property>
+                <child>
+                  <object class="GtkImage" id="color_icon">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="icon_name">color-picker</property>
                   </object>
                 </child>
               </object>
@@ -456,6 +452,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">replace one</property>
                 <property name="image">replace_icon</property>
               </object>
               <packing>
@@ -471,6 +468,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">replace all</property>
                 <property name="image">replace_all_icon</property>
               </object>
               <packing>
