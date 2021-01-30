@@ -115,11 +115,22 @@ class MyWindow(Gtk.Window):
         self.btn_open.connect('clicked', self.on_open)
         self.btn_open.set_relief(Gtk.ReliefStyle.NONE)
         
-        # recent files
-        self.combo_recent = builder.get_object("combo_recent")
-        self.combo_recent.connect('changed', self.on_open_recent)
+        # recent files 
+        self.btn_up = builder.get_object("btn_up")
+        self.btn_menu = Gtk.MenuButton(label="recent Files ...")
+        self.btn_menu.set_image_position(1)
+        self.btn_menu.set_image(self.btn_up)
+        self.btn_menu.set_relief(Gtk.ReliefStyle.NONE)
+        self.btn_menu.set_name("menubutton")       
+        self.recent_menu = Gtk.Menu()
+        self.btn_menu.set_popup(self.recent_menu)
         
+        self.btn_box = builder.get_object("btn_box")
+        self.btn_box.pack_start(self.btn_menu, False, False, 1)
+        self.btn_box.reorder_child(self.btn_menu, 0)
+
         
+        # run code
         self.btn_run = builder.get_object("btn_run")
         self.btn_run.connect('clicked', self.on_run)
         self.btn_run.set_relief(Gtk.ReliefStyle.NONE)
@@ -132,6 +143,11 @@ class MyWindow(Gtk.Window):
         self.btn_check_code = builder.get_object("btn_check_code")
         self.btn_check_code.connect('clicked', self.on_check_code)
         self.btn_check_code.set_relief(Gtk.ReliefStyle.NONE)
+        
+        # color button
+        self.btn_color = builder.get_object("btn_color")
+        self.btn_color.connect('clicked', self.on_get_color)
+        self.btn_color.set_relief(Gtk.ReliefStyle.NONE)        
         
         # entry go to line
         self.entry_goto = builder.get_object("entry_goto")
@@ -168,11 +184,9 @@ class MyWindow(Gtk.Window):
         keyword_provider.register(keyword_buffer)
         self.text_completion.add_provider(keyword_provider) 
         
-        
         # Settings for SourceView Find
         self.searchbar = builder.get_object("searchbar")
         self.search_settings = GtkSource.SearchSettings()
-        #self.searchbar.bind_property("text", self.search_settings, "search-text")
         self.search_settings.set_search_text("initial highlight")
         self.search_settings.set_wrap_around(True)
         self.search_context = GtkSource.SearchContext.new(self.buffer, self.search_settings)
@@ -186,8 +200,25 @@ class MyWindow(Gtk.Window):
         scheme = self.stylemanager.get_scheme(self.style[2]) 
         self.buffer.set_style_scheme(scheme)
         
-        self.style_box = builder.get_object("style_box")
-        self.style_box.connect("changed", self.on_style_changed)
+        ############ styles selector #################
+        self.btn_style_up = builder.get_object("btn_style_up")
+        self.btn_style_up.set_name("stylesbutton")
+        self.btn_styles = Gtk.MenuButton(label="Styles")
+        self.btn_styles.set_image_position(1)
+        self.btn_styles.set_image(self.btn_style_up)
+        self.btn_styles.set_relief(Gtk.ReliefStyle.NONE)
+        self.btn_styles.set_name("stylesbutton")       
+        self.styles_menu = Gtk.Menu()
+        self.btn_styles.set_popup(self.styles_menu) 
+        self.btn_box.pack_end(self.btn_styles, False, False, 1) 
+        
+        for style in self.style:
+            value = self.style[style]
+            menuitem = Gtk.MenuItem(value)
+            menuitem.connect("activate", self.on_styles_activated)
+            self.styles_menu.append(menuitem)
+        self.styles_menu.show_all()
+        #############################
         
         self.findbox = builder.get_object("findbox")
         
@@ -200,7 +231,6 @@ class MyWindow(Gtk.Window):
         self.btn_replace = builder.get_object("btn_replace")
         self.btn_replace.connect('clicked', self.replace_one)
         self.btn_replace.set_relief(Gtk.ReliefStyle.NONE)
-
 
         self.btn_replace_all = builder.get_object("btn_replace_all")
         self.btn_replace_all.connect('clicked', self.replace_all)
@@ -273,14 +303,6 @@ class MyWindow(Gtk.Window):
             self.find_previous_match()
         if (event.keyval == Gdk.keyval_from_name("F10")):
             self.find_next_match()
-            
-    def on_style_changed(self, *args):
-        index = self.style_box.get_active()
-        model = self.style_box.get_model()
-        item = model[index]
-        print(item[0])
-        scheme = self.stylemanager.get_scheme(self.style[item[0]]) 
-        self.buffer.set_style_scheme(scheme)
         
     ### drop file
     def on_drag_data_received(self, widget, context, x, y, selection, target_type, timestamp):
@@ -317,7 +339,6 @@ class MyWindow(Gtk.Window):
                 self.lastfiles.append(myfile)
                 self.ordered_list()
                 self.terminal.reset(True, True)
-                #self.terminal.feed_child([13])
         
     ### get editor text
     def get_buffer(self):
@@ -593,7 +614,7 @@ class MyWindow(Gtk.Window):
         start_iter =  self.buffer.get_start_iter()
         found = start_iter.forward_search(search_str,0, None) 
         if found:
-           match_start,match_end = found #add this line to get match_start and match_end
+           match_start,match_end = found
            self.buffer.select_range(match_start,match_end)
            self.editor.scroll_to_iter(match_end, 0.1, True, 0.0, 0.5)
            self.editor.grab_focus()
@@ -662,14 +683,9 @@ class MyWindow(Gtk.Window):
                                 self.config['window']['width'], self.config['window']['height'])
             self.win.resize(int(w), int(h))
             self.win.move(int(x), int(y))
-
-        self.combo_recent.append_text("recent Files ...")
-        self.combo_recent.set_active(0)
         if self.config.has_section("files"):
             self.lastfiles = self.config['files']['lastfiles'].split(",")
-            self.lastfiles = [x for x in self.lastfiles if x]
-            for line in self.lastfiles:
-                self.combo_recent.append_text(line)
+            self.ordered_list()
             
     def write_settings(self, *args):
         self.config['window']['left'] = str(self.win.get_position()[0])
@@ -679,14 +695,6 @@ class MyWindow(Gtk.Window):
         self.config['files']['lastfiles'] = ",".join(self.lastfiles)
         with open('config.conf', 'w') as configfile:
             self.config.write(configfile)
-
-    def on_open_recent(self, *args):
-        if not self.combo_recent.get_active_text() == "recent Files ...":
-            if self.is_changed:
-                self.maybe_saved()
-            myfile = self.combo_recent.get_active_text()
-            if not myfile == None:
-                self.open_file(myfile)
             
     def on_check_code(self, *args):
         #if not self.get_buffer() == self.new_text:
@@ -699,14 +707,16 @@ class MyWindow(Gtk.Window):
             self.status_label.set_text("no code!")
             
     def ordered_list(self, *args):
+        for i in self.recent_menu.get_children():
+            self.recent_menu.remove(i)
         self.lastfiles = [x for x in self.lastfiles if x]
         self.lastfiles = self.ordered_set(self.lastfiles)
-        self.combo_recent.remove_all()
-        self.combo_recent.append_text("recent Files ...")
-        self.combo_recent.set_active(0)
         for line in self.lastfiles:
-            print(line)
-            self.combo_recent.append_text(line)        
+            menuitem = Gtk.MenuItem(line)
+            menuitem.connect("activate", self.on_menuitem_activated)
+            self.recent_menu.append(menuitem)
+        self.recent_menu.show_all()
+            
         
     def ordered_set(self, in_list):
         out_list = []
@@ -716,6 +726,38 @@ class MyWindow(Gtk.Window):
                 out_list.append(val)
                 added.add(val)
         return out_list
+        
+    def on_get_color(self, *args): 
+        colorchooserdialog = Gtk.ColorChooserDialog()
+        colorchooserdialog.set_property("show-editor", False)
+
+        if colorchooserdialog.run() == Gtk.ResponseType.OK:
+            color = colorchooserdialog.get_rgba()
+            red = (color.red * 255)
+            green = (color.green * 255)
+            blue = (color.blue * 255)
+            col = ("#{0:X}{1:X}{2:X}".format(int(red), int(green), int(blue)))
+            self.buffer.delete_selection(True, True)
+            self.buffer.insert_at_cursor(col, -1)
+            self.editor.grab_focus() 
+        colorchooserdialog.destroy()
+        
+    def get_selected_buffer(self, *args):
+        a,b  = self.buffer.get_selection_bounds()
+        sel_text = self.buffer.get_text(a, b, True)
+        return (sel_text) 
+
+    def on_menuitem_activated(self, menuitem, *args):
+        if self.is_changed:
+            self.maybe_saved()
+        myfile = menuitem.get_label()
+        if not myfile == None:
+            self.open_file(myfile) 
+            
+    def on_styles_activated(self, menuitem, *args):
+        style = menuitem.get_label()
+        scheme = self.stylemanager.get_scheme(style) 
+        self.buffer.set_style_scheme(scheme)
 
 if __name__ == "__main__":
     w = MyWindow()
