@@ -683,6 +683,9 @@ class MyWindow(Gtk.Window):
                                 self.config['window']['width'], self.config['window']['height'])
             self.win.resize(int(w), int(h))
             self.win.move(int(x), int(y))
+            style = self.config['window']['style']
+            scheme = self.stylemanager.get_scheme(style) 
+            self.buffer.set_style_scheme(scheme)           
         if self.config.has_section("files"):
             self.lastfiles = self.config['files']['lastfiles'].split(",")
             self.ordered_list()
@@ -692,6 +695,7 @@ class MyWindow(Gtk.Window):
         self.config['window']['top'] = str(self.win.get_position()[1])
         self.config['window']['width'] = str(self.win.get_size()[0])
         self.config['window']['height'] = str(self.win.get_size()[1])
+        self.config['window']['style'] = self.buffer.get_style_scheme().get_id()
         self.config['files']['lastfiles'] = ",".join(self.lastfiles)
         with open('config.conf', 'w') as configfile:
             self.config.write(configfile)
@@ -758,6 +762,7 @@ class MyWindow(Gtk.Window):
         style = menuitem.get_label()
         scheme = self.stylemanager.get_scheme(style) 
         self.buffer.set_style_scheme(scheme)
+        print(self.buffer.get_style_scheme().get_id())
 
 if __name__ == "__main__":
     w = MyWindow()
