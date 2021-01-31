@@ -1,0 +1,18 @@
+    def on_save_file():
+       dlg = Gtk.FileChooserDialog(title="Please choose a file", parent=None, action = 1)
+       dlg.add_buttons("Cancel", Gtk.ResponseType.CANCEL,
+                 "Save", Gtk.ResponseType.OK)
+                 
+       filter = Gtk.FileFilter()
+       filter.set_name("Text Files")
+       filter.add_pattern("*.txt")
+       dlg.add_filter(filter)
+       dlg.set_current_name("mychannels1.txt")
+       response = dlg.run()
+
+       if response == Gtk.ResponseType.OK:
+           infile = (dlg.get_filename())
+           return infile
+       else:
+           return ""
+       dlg.destroy()

@@ -1,0 +1,18 @@
+    def on_open_file():
+       dlg = Gtk.FileChooserDialog(title="Please choose a file", parent=None, action = 0)
+       dlg.add_buttons("Cancel", Gtk.ResponseType.CANCEL,
+                 "Save", Gtk.ResponseType.OK)
+                 
+       filter = Gtk.FileFilter()
+       filter.set_name("Playlists")
+       filter.add_pattern("*.m3u")
+       dlg.add_filter(filter)
+       #dlg.set_filename("/tmp/CA01_CANADA.m3u")
+       response = dlg.run()
+
+       if response == Gtk.ResponseType.OK:
+           infile = (dlg.get_filename())
+           return infile
+       else:
+           return ""
+       dlg.destroy()

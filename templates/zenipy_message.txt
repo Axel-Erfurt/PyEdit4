@@ -1,0 +1,4 @@
+    import zenipy
+
+    message = "Hello"
+    zenipy.message(title='Message', text=message, width=330, height=120, timeout=None)

@@ -1,0 +1,7 @@
+import locale
+import datetime
+
+loc = locale.getlocale()
+locale.setlocale(locale.LC_ALL, loc)
+dt = datetime.date.today().strftime("%-d.%B %Y")
+print(dt)
