@@ -1,5 +1,5 @@
 #myeditor {
-    font-size: 9pt;
+    font-size: 10pt;
     font-family: Noto Sans;
     border: 0px;
 }
@@ -29,7 +29,8 @@ headerbar.titlebar {
 #replacebutton:hover, #replaceallbutton:hover,
 #filemanagerbutton:hover, #aboutbutton:hover,
 #checkbutton:hover, #colorbutton:hover,
-#menubutton:hover, #stylesbutton:hover
+#menubutton:hover, #stylesbutton:hover,
+#dialogsbutton:hover
 {
     background-image: linear-gradient(0deg, #00aaff 0%, lightblue 100%);
 }
