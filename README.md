@@ -9,6 +9,8 @@ Python Editor written in python Gtk3
 
 ![alt](https://raw.githubusercontent.com/Axel-Erfurt/PyEdit4/main/screenshot.png)
 
+You can add Code Snippets as .txt files in the _templates_ folder
+
 - F5 ->  run Scipt
 - F2 ->  toggle comment line
 - F10 -> find next (selected)
