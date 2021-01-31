@@ -26,6 +26,11 @@
     <property name="can_focus">False</property>
     <property name="icon_name">down</property>
   </object>
+  <object class="GtkImage" id="dialogs_icon">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">down</property>
+  </object>
   <object class="GtkListStore" id="liststore1">
     <columns>
       <!-- column-name Index -->
@@ -117,6 +122,7 @@
               <object class="GtkBox" id="btn_box">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="margin_bottom">3</property>
                 <child>
                   <placeholder/>
                 </child>
@@ -485,6 +491,57 @@
           </packing>
         </child>
         <child>
+          <object class="GtkPaned" id="pane_widget">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="orientation">vertical</property>
+            <property name="position_set">True</property>
+            <property name="wide_handle">True</property>
+            <child>
+              <object class="GtkScrolledWindow">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkSourceView" id="editor">
+                    <property name="name">myeditor</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="wrap_mode">word</property>
+                    <property name="left_margin">2</property>
+                    <property name="right_margin">2</property>
+                    <property name="top_margin">2</property>
+                    <property name="bottom_margin">2</property>
+                    <property name="show_line_numbers">True</property>
+                    <property name="tab_width">4</property>
+                    <property name="auto_indent">True</property>
+                    <property name="insert_spaces_instead_of_tabs">True</property>
+                    <property name="right_margin_position">79</property>
+                    <property name="highlight_current_line">True</property>
+                    <style>
+                      <class name="myeditor"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="resize">False</property>
+                <property name="shrink">True</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkLabel" id="status_label">
             <property name="name">statuslabel</property>
             <property name="visible">True</property>
@@ -496,46 +553,8 @@
             <property name="expand">False</property>
             <property name="fill">False</property>
             <property name="pack_type">end</property>
-            <property name="position">3</property>
+            <property name="position">6</property>
           </packing>
-        </child>
-        <child>
-          <object class="GtkScrolledWindow">
-            <property name="height_request">600</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="vexpand">True</property>
-            <property name="shadow_type">in</property>
-            <child>
-              <object class="GtkSourceView" id="editor">
-                <property name="name">myeditor</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="wrap_mode">word</property>
-                <property name="left_margin">2</property>
-                <property name="right_margin">2</property>
-                <property name="top_margin">2</property>
-                <property name="bottom_margin">2</property>
-                <property name="show_line_numbers">True</property>
-                <property name="tab_width">4</property>
-                <property name="auto_indent">True</property>
-                <property name="insert_spaces_instead_of_tabs">True</property>
-                <property name="right_margin_position">79</property>
-                <property name="highlight_current_line">True</property>
-                <style>
-                  <class name="myeditor"/>
-                </style>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">4</property>
-          </packing>
-        </child>
-        <child>
-          <placeholder/>
         </child>
       </object>
     </child>
