@@ -3,7 +3,6 @@
 
 ### created in January 2021 by Axel Schneider
 ### https://github.com/Axel-Erfurt/
-
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -14,7 +13,7 @@ gi.require_version('Vte', '2.91')
 from gi.repository import Gtk, Gdk, GLib, GtkSource, GObject, Vte, GdkPixbuf
 import sys
 from subprocess import run
-from os import path, environ
+from os import path, environ, listdir
 from urllib.request import url2pathname
 import warnings
 from shutil import copyfile
@@ -218,7 +217,31 @@ class MyWindow(Gtk.Window):
             menuitem.connect("activate", self.on_styles_activated)
             self.styles_menu.append(menuitem)
         self.styles_menu.show_all()
-        #############################
+        
+        ############ templates selector #################
+        self.btn_dialogs_up = builder.get_object("dialogs_icon")
+        self.btn_dialogs_up.set_name("dialogsbutton")
+        self.btn_templates = Gtk.MenuButton(label="Templates")
+        self.btn_templates.set_image_position(1)
+        self.btn_templates.set_image(self.btn_style_up)
+        self.btn_templates.set_relief(Gtk.ReliefStyle.NONE)
+        self.btn_templates.set_name("dialogsbutton")       
+        self.templates_menu = Gtk.Menu()
+        self.btn_templates.set_popup(self.templates_menu) 
+        self.btn_box.pack_end(self.btn_templates, False, False, 1) 
+        mlist = []
+        mypath = "templates"
+        for name in listdir(mypath):
+            if path.isfile(path.join(mypath, name)):
+                mlist.append(name)
+        mlist.sort(key=str.lower)
+        
+        for name in mlist:
+            menuitem = Gtk.MenuItem(name.replace(".txt", ""))
+            menuitem.connect("activate", self.on_templates_activated)
+            self.templates_menu.append(menuitem)
+        self.templates_menu.show_all()
+        #################################################
         
         self.findbox = builder.get_object("findbox")
         
@@ -252,13 +275,18 @@ class MyWindow(Gtk.Window):
             
         self.file_filter_all = Gtk.FileFilter()
         self.file_filter_all.set_name("All Files")
-        self.file_filter_all.add_pattern("*.*")     
+        self.file_filter_all.add_pattern("*.*")    
+       
+        self.pane_widget = builder.get_object("pane_widget")
         
         # terminal
         self.terminal = Terminal()
         self.terminal.set_size_request(-1, 100)
         self.vbox = builder.get_object("vbox")
-        self.vbox.pack_start(self.terminal, True, True, 6)
+
+        # add terminal to paned
+        self.pane_widget.add2(self.terminal)
+        
         self.cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         
         self.win.connect("delete-event", self.on_close)
@@ -266,6 +294,8 @@ class MyWindow(Gtk.Window):
         self.win.move(0, 0)
         self.read_settings()
         self.win.show_all()
+        h = self.win.get_allocation().height
+        self.pane_widget.set_position(h - 300)
         ### focus on editor
         self.findbox.set_visible(False)
 
@@ -562,7 +592,7 @@ class MyWindow(Gtk.Window):
     def on_run(self, *args):
         # check code exists
         code = self.get_buffer()
-        if code:
+        if not code == self.new_text:
             if self.is_changed:
                 self.save_file()
                 
@@ -579,7 +609,6 @@ class MyWindow(Gtk.Window):
             self.terminal.grab_focus()
             self.terminal.feed_child([13])
         else:
-            # no text in editor
             self.status_label.set_text("no code to execute!")
 
     # open script folder in filemanager
@@ -755,14 +784,27 @@ class MyWindow(Gtk.Window):
         if self.is_changed:
             self.maybe_saved()
         myfile = menuitem.get_label()
-        if not myfile == None:
+        if path.isfile(myfile):
             self.open_file(myfile) 
+        else:
+            self.message_dialog("File does not exist")
             
     def on_styles_activated(self, menuitem, *args):
         style = menuitem.get_label()
         scheme = self.stylemanager.get_scheme(style) 
         self.buffer.set_style_scheme(scheme)
         print(self.buffer.get_style_scheme().get_id())
+        
+    def on_templates_activated(self, menuitem, *args):
+        text_to_insert = open(f"templates/{menuitem.get_label()}.txt").read()
+        self.buffer.insert_at_cursor(text_to_insert)
+        
+    def message_dialog(self, message, *args):
+        dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.INFO,
+                                    Gtk.ButtonsType.OK, "Message")
+        dialog.format_secondary_text(message)
+        dialog.run()
+        dialog.destroy() 
 
 if __name__ == "__main__":
     w = MyWindow()
