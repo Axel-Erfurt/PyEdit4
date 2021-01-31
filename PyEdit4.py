@@ -678,13 +678,16 @@ class MyWindow(Gtk.Window):
             
     def find_next_match_from_entry(self, *args):
         search_str =  self.searchbar.get_text()
-        start_iter =  self.buffer.get_start_iter()
-        found = start_iter.forward_search(search_str,0, None) 
-        if found:
-           match_start,match_end = found
-           self.buffer.select_range(match_start,match_end)
-           self.editor.scroll_to_iter(match_end, 0.1, True, 0.0, 0.1)
-           self.editor.grab_focus()
+        self.search_settings.set_search_text(search_str)
+        self.search_mark = self.buffer.get_insert()
+        search_iter = self.buffer.get_iter_at_mark (self.search_mark)
+        search_iter.forward_char()
+        result = self.search_context.forward(search_iter)
+        valid, start_iter, end_iter = result[0], result[1], result[2]
+        if valid == True:
+            self.buffer.move_mark(self.search_mark, end_iter)
+            self.buffer.select_range(start_iter, end_iter)
+            self.editor.scroll_to_iter(end_iter, 0.1, True, 0.0, 0.1)
 
     def find_next_match(self, *args):
         if self.buffer.get_has_selection():
