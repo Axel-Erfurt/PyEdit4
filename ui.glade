@@ -142,6 +142,9 @@
                   <placeholder/>
                 </child>
                 <child>
+                  <placeholder/>
+                </child>
+                <child>
                   <object class="GtkButton" id="btn_about">
                     <property name="name">aboutbutton</property>
                     <property name="visible">True</property>
@@ -527,8 +530,8 @@
                 </child>
               </object>
               <packing>
-                <property name="resize">False</property>
-                <property name="shrink">True</property>
+                <property name="resize">True</property>
+                <property name="shrink">False</property>
               </packing>
             </child>
             <child>
