@@ -30,7 +30,7 @@ headerbar.titlebar {
 #filemanagerbutton:hover, #aboutbutton:hover,
 #checkbutton:hover, #colorbutton:hover,
 #menubutton:hover, #stylesbutton:hover,
-#dialogsbutton:hover
+#dialogsbutton:hover, #defbutton:hover
 {
     background-image: linear-gradient(0deg, #00aaff 0%, lightblue 100%);
 }
