@@ -12,11 +12,11 @@ gi.require_version('GtkSource', '3.0')
 gi.require_version('Vte', '2.91')
 from gi.repository import Gtk, Gdk, GLib, GtkSource, GObject, Vte, GdkPixbuf
 import sys
-from subprocess import run
+from subprocess import run, Popen
 from os import path, environ, listdir
 from urllib.request import url2pathname
 import warnings
-from shutil import copyfile
+from shutil import copyfile, which
 
 dnd_list = [Gtk.TargetEntry.new("text/uri-list", 0, 80)]
 
@@ -79,6 +79,15 @@ class MyWindow(Gtk.Window):
         self.current_filename = ""
         self.current_folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOCUMENTS) ###path.expanduser("~")
         self.is_changed = False
+        
+        # check devhelp exists
+        if not (which("devhelp")) == "":
+            self.can_devhelp = True
+            print("devhelp available")
+        else:
+            self.can_devhelp = False
+            print("devhelp not available")
+        
         builder = Gtk.Builder()
         GObject.type_register(GtkSource.View)
         builder.add_from_file("ui.glade")
@@ -157,6 +166,10 @@ class MyWindow(Gtk.Window):
         self.editor.drag_dest_set_target_list(dnd_list)
         self.editor.connect("drag_data_received", self.on_drag_data_received)        
         self.editor.connect("key_press_event", self.editor_key_press)
+        self.editor.set_smart_backspace(True)
+        self.editor.set_show_line_marks(True)
+        
+        #self.gutter = self.editor.get_gutter(window_type = Gtk.TextWindowType(Gtk.GTK_TEXT_WINDOW_LEFT))
         
         # buffer
         self.buffer = GtkSource.Buffer()
@@ -200,11 +213,12 @@ class MyWindow(Gtk.Window):
         self.buffer.set_style_scheme(scheme)
         
         ############ styles selector #################
-        self.btn_style_up = builder.get_object("btn_style_up")
-        self.btn_style_up.set_name("stylesbutton")
+        btn_style_up = Gtk.Image.new_from_icon_name("down", 4)
+        btn_style_up.set_name("stylesbutton")
         self.btn_styles = Gtk.MenuButton(label="Styles")
+        self.btn_styles.set_tooltip_text("set Style Theme")
+        self.btn_styles.set_image(btn_style_up)
         self.btn_styles.set_image_position(1)
-        self.btn_styles.set_image(self.btn_style_up)
         self.btn_styles.set_relief(Gtk.ReliefStyle.NONE)
         self.btn_styles.set_name("stylesbutton")       
         self.styles_menu = Gtk.Menu()
@@ -219,11 +233,12 @@ class MyWindow(Gtk.Window):
         self.styles_menu.show_all()
         
         ############ templates selector #################
-        self.btn_dialogs_up = builder.get_object("dialogs_icon")
-        self.btn_dialogs_up.set_name("dialogsbutton")
+        templates_btn_up = Gtk.Image.new_from_icon_name("down", 4)
+        templates_btn_up.set_name("dialogsbutton")
         self.btn_templates = Gtk.MenuButton(label="Templates")
+        self.btn_templates.set_tooltip_text("insert template")
         self.btn_templates.set_image_position(1)
-        self.btn_templates.set_image(self.btn_style_up)
+        self.btn_templates.set_image(templates_btn_up)
         self.btn_templates.set_relief(Gtk.ReliefStyle.NONE)
         self.btn_templates.set_name("dialogsbutton")       
         self.templates_menu = Gtk.Menu()
@@ -241,7 +256,18 @@ class MyWindow(Gtk.Window):
             menuitem.connect("activate", self.on_templates_activated)
             self.templates_menu.append(menuitem)
         self.templates_menu.show_all()
-        #################################################
+        
+        ################ definitions selector ###########################
+        def_btn_up = Gtk.Image.new_from_icon_name("down", 4)
+        self.def_btn = Gtk.MenuButton(label="Classes / Definitions", image=def_btn_up)
+        self.def_btn.set_name("defbutton")
+        self.def_btn.set_tooltip_text("go to def")
+        self.def_btn.set_image_position(1)
+        self.def_btn.set_relief(Gtk.ReliefStyle.NONE)
+        self.def_menu = Gtk.Menu()
+        self.def_btn.set_popup(self.def_menu) 
+        self.btn_box.pack_end(self.def_btn, False, False, 1) 
+        ##################################################################
         
         self.findbox = builder.get_object("findbox")
         
@@ -284,9 +310,8 @@ class MyWindow(Gtk.Window):
         self.terminal.set_size_request(-1, 100)
         self.vbox = builder.get_object("vbox")
 
-        # add terminal to paned
-        self.pane_widget.add2(self.terminal)
-        
+        # add terminal to pane
+        self.pane_widget.pack2(self.terminal)
         self.cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         
         self.win.connect("delete-event", self.on_close)
@@ -295,7 +320,7 @@ class MyWindow(Gtk.Window):
         self.read_settings()
         self.win.show_all()
         h = self.win.get_allocation().height
-        self.pane_widget.set_position(h - 300)
+        self.pane_widget.set_position(h - 350)
         ### focus on editor
         self.findbox.set_visible(False)
 
@@ -307,6 +332,8 @@ class MyWindow(Gtk.Window):
             self.status_label.set_text("Welcome to PyEdit4")
         self.editor.grab_focus()
         self.is_changed = False
+        #self.win.connect("size-allocate", self.on_resize)
+        #self.pane_widget.connect("notify::position", self.on_resize)
         Gtk.main() 
         
     def editor_key_press(self, widget, event):
@@ -333,7 +360,13 @@ class MyWindow(Gtk.Window):
             self.find_previous_match()
         if (event.keyval == Gdk.keyval_from_name("F10")):
             self.find_next_match()
-        
+        if (event.keyval == Gdk.keyval_from_name("F1")):
+            self.show_dev_help()
+        if (event.keyval == Gdk.keyval_from_name("F7")):
+            self.on_unindent_lines()
+        if (event.keyval == Gdk.keyval_from_name("F8")):
+            self.on_indent_lines()
+            
     ### drop file
     def on_drag_data_received(self, widget, context, x, y, selection, target_type, timestamp):
         myfile = ""
@@ -369,6 +402,7 @@ class MyWindow(Gtk.Window):
                 self.lastfiles.append(myfile)
                 self.ordered_list()
                 self.terminal.reset(True, True)
+                self.fill_def_btn()
         
     ### get editor text
     def get_buffer(self):
@@ -532,6 +566,7 @@ class MyWindow(Gtk.Window):
                 self.headerbar.set_subtitle(myfile)
                 self.lastfiles.append(myfile)
                 self.ordered_list()
+                self.fill_def_btn()
                 
     ### save current file            
     def save_file(self, *args):
@@ -610,6 +645,7 @@ class MyWindow(Gtk.Window):
             self.terminal.feed_child([13])
         else:
             self.status_label.set_text("no code to execute!")
+        self.editor.grab_focus()
 
     # open script folder in filemanager
     def on_fm(self, *args):
@@ -798,6 +834,7 @@ class MyWindow(Gtk.Window):
     def on_templates_activated(self, menuitem, *args):
         text_to_insert = open(f"templates/{menuitem.get_label()}.txt").read()
         self.buffer.insert_at_cursor(text_to_insert)
+        self.fill_def_btn()
         
     def message_dialog(self, message, *args):
         dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.INFO,
@@ -805,7 +842,45 @@ class MyWindow(Gtk.Window):
         dialog.format_secondary_text(message)
         dialog.run()
         dialog.destroy() 
+        
+    def show_dev_help(self, *args):
+        if self.can_devhelp:
+            help_text = self.get_selected_buffer()
+            Popen(["devhelp", "-s", help_text])
 
+    def on_resize(self, *args):
+        print("move-handle")
+        
+    def on_indent_lines(self, *args):
+        a,b  = self.buffer.get_selection_bounds()
+        self.editor.indent_lines(a, b)
+        
+    def on_unindent_lines(self, *args):
+        a,b  = self.buffer.get_selection_bounds()
+        self.editor.unindent_lines(a, b)
+        
+    def fill_def_btn(self, *args):
+        for i in self.def_menu.get_children():
+            self.def_menu.remove(i)
+        text_list = self.get_buffer().splitlines()
+        for line in text_list:
+            if ("def ") in line or "class " in line:
+                menuitem = Gtk.MenuItem(line)
+                menuitem.connect("activate", self.on_def_activated)
+                self.def_menu.append(menuitem)
+        self.def_menu.show_all()     
+
+    def on_def_activated(self, menuitem, *args):
+        def_text = menuitem.get_label()
+        start_iter =  self.buffer.get_start_iter()
+        found = start_iter.forward_search(def_text,0, None) 
+        if found:
+           match_start,match_end = found
+           self.buffer.select_range(match_start,match_end)
+           self.editor.scroll_to_iter(match_end, 0.0, True, 0.0, 0.0)
+           self.editor.grab_focus()        
+    
+        
 if __name__ == "__main__":
     w = MyWindow()
     w.main(sys.argv)
