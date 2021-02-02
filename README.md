@@ -12,11 +12,14 @@ Python Editor written in python Gtk3
 
 You can add Code Snippets as .txt files in the _templates_ folder
 
-- F5 ->  run Scipt
-- F2 ->  toggle comment line
-- F10 -> find next (selected)
-- F9 -> find previous (selected)
 - Ctrl+F -> find
+- F1 ->  show help for selected, needs devhelp
+- F2 ->  toggle comment on line (or on multiple lines)
+- F3 ->  set selected text in (round) brackets
+- F4 ->  set selected text in double quotes
+- F5 ->  run Script
+- F6 ->  set selected text in double quotes inside (round) brackets
 - F7 unindent selected lines
 - F8 indent selected lines
-- F1 show help for selected, needs devhelp
+- F9 -> find previous (selected)
+- F10 -> find next (selected)
