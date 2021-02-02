@@ -23,21 +23,23 @@ dnd_list = [Gtk.TargetEntry.new("text/uri-list", 0, 80)]
 warnings.filterwarnings("ignore")
 import configparser
 
-
+# terminal class
 class Terminal(Vte.Terminal):
     """Defines a simple terminal"""
     def __init__(self):
         super(Vte.Terminal, self).__init__()
 
-        self.spawn_sync(
-        Vte.PtyFlags.DEFAULT,
-        environ['HOME'],
-        ["/bin/sh"],
-        [],
-        GLib.SpawnFlags.DO_NOT_REAP_CHILD,
-        None,
-        None,
-        )
+        self.spawn_async(Vte.PtyFlags.DEFAULT, 
+            environ["HOME"],
+            ["/bin/sh"],
+            None,
+            GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+            None,
+            None,
+            -1,
+            None,
+            None
+            )
         self.set_rewrap_on_resize(True)
         self.set_font_scale(0.9)
         self.set_scroll_on_output(True)
@@ -168,9 +170,7 @@ class MyWindow(Gtk.Window):
         self.editor.connect("key_press_event", self.editor_key_press)
         self.editor.set_smart_backspace(True)
         self.editor.set_show_line_marks(True)
-        
-        #self.gutter = self.editor.get_gutter(window_type = Gtk.TextWindowType(Gtk.GTK_TEXT_WINDOW_LEFT))
-        
+                
         # buffer
         self.buffer = GtkSource.Buffer()
         self.buffer.set_text(self.new_text)
@@ -198,6 +198,7 @@ class MyWindow(Gtk.Window):
         
         # Settings for SourceView Find
         self.searchbar = builder.get_object("searchbar")
+        self.searchbar.connect("key_press_event", self.searchbar_key_press)
         self.search_settings = GtkSource.SearchSettings()
         self.search_settings.set_search_text("initial highlight")
         self.search_settings.set_wrap_around(True)
@@ -205,12 +206,10 @@ class MyWindow(Gtk.Window):
         self.search_context.set_highlight(False)
         self.search_mark = Gtk.TextMark()
         self.searchbar.connect("activate", self.find_next_match_from_entry)
-        #self.searchbar.connect("search-changed", self.find_text)
         
         # styles
         self.stylemanager = GtkSource.StyleSchemeManager()
-        self.style = {1: "kate", 2: "builder", 3: "builder-dark", 4: "classic", 5: "tango", 6: "styles", 
-                7: "cobalt", 8: "solarized-light", 9: "solarized-dark", 10: "classic"}
+        self.style = self.stylemanager.get_scheme_ids()
         scheme = self.stylemanager.get_scheme(self.style[2]) 
         self.buffer.set_style_scheme(scheme)
         
@@ -228,8 +227,7 @@ class MyWindow(Gtk.Window):
         self.btn_box.pack_end(self.btn_styles, False, False, 1) 
         
         for style in self.style:
-            value = self.style[style]
-            menuitem = Gtk.MenuItem(value)
+            menuitem = Gtk.MenuItem(style)
             menuitem.connect("activate", self.on_styles_activated)
             self.styles_menu.append(menuitem)
         self.styles_menu.show_all()
@@ -274,7 +272,9 @@ class MyWindow(Gtk.Window):
         self.findbox = builder.get_object("findbox")
         
         self.replacebar = builder.get_object("replacebar")
-        
+        self.replacebar.connect("key_press_event", self.searchbar_key_press)
+
+        ################ buttons ###########################        
         self.btn_show_find = builder.get_object("btn_show_find")
         self.btn_show_find.connect('clicked', self.toggle_findbox)
         self.btn_show_find.set_relief(Gtk.ReliefStyle.NONE)
@@ -309,6 +309,7 @@ class MyWindow(Gtk.Window):
         
         # terminal
         self.terminal = Terminal()
+        self.terminal.set_name("vterminal")
         self.terminal.set_size_request(-1, 100)
         self.vbox = builder.get_object("vbox")
 
@@ -323,7 +324,6 @@ class MyWindow(Gtk.Window):
         self.win.show_all()
         h = self.win.get_allocation().height
         self.pane_widget.set_position(h - 350)
-        ### focus on editor
         self.findbox.set_visible(False)
 
         ### load sys.argv file
@@ -332,10 +332,10 @@ class MyWindow(Gtk.Window):
             self.open_file(myfile)
         else:
             self.status_label.set_text("Welcome to PyEdit4")
+            
+        # focus on editor
         self.editor.grab_focus()
         self.is_changed = False
-        #self.win.connect("size-allocate", self.on_resize)
-        #self.pane_widget.connect("notify::position", self.on_resize)
         Gtk.main() 
         
     def editor_key_press(self, widget, event):
@@ -368,8 +368,12 @@ class MyWindow(Gtk.Window):
             self.on_unindent_lines()
         if (event.keyval == Gdk.keyval_from_name("F8")):
             self.on_indent_lines()
+
+    def searchbar_key_press(self, widget, event):
+        if (event.keyval == Gdk.KEY_Escape):
+            self.findbox.set_visible(False)
             
-    ### drop file
+    # drop file
     def on_drag_data_received(self, widget, context, x, y, selection, target_type, timestamp):
         myfile = ""
         if target_type == 80:
@@ -385,7 +389,7 @@ class MyWindow(Gtk.Window):
             txt = selection.get_text()
             self.buffer.insert_at_cursor(txt)
                 
-                
+    # open file            
     def open_file(self, myfile, *args):
         with open(myfile, 'r') as f:
             if myfile:
@@ -406,14 +410,14 @@ class MyWindow(Gtk.Window):
                 self.terminal.reset(True, True)
                 self.fill_def_btn()
         
-    ### get editor text
+    # get editor text
     def get_buffer(self):
         start_iter = self.buffer.get_start_iter()
         end_iter = self.buffer.get_end_iter()
         text = self.buffer.get_text(start_iter, end_iter, True) 
         return text
     
-    ### replace one  
+    # replace one  
     def replace_one(self, *args):
         if len(self.searchbar.get_text()) > 0:
             print("replace_one")
@@ -430,7 +434,7 @@ class MyWindow(Gtk.Window):
                 self.buffer.delete_selection(True, True)
                 self.status_label.set_text(f"replaced '{search_text}' with '{replace_text}'")
 
-    ### replace all
+    # replace all
     def replace_all(self, *args):
         if len(self.searchbar.get_text()) > 0:
             print("replace_all")
@@ -441,6 +445,7 @@ class MyWindow(Gtk.Window):
             text = text.replace(search_text, replace_text)
             self.buffer.set_text(text)
 
+    # searchbox
     def find_text(self, start_offset=1):
         if not self.findbox.is_visible():
             self.findbox.set_visible(True)
@@ -464,19 +469,19 @@ class MyWindow(Gtk.Window):
         else:
             buf.place_cursor(buf.get_iter_at_mark(buf.get_insert()))
 
-    ### show / hide findbox
+    # show / hide findbox
     def toggle_findbox(self, *args):
         if not self.findbox.is_visible():
             self.findbox.set_visible(True)
         else:
             self.findbox.set_visible(False)
             
-    ### set modified   
+    # set modified   
     def is_modified(self, *args):
         self.is_changed = True
         self.headerbar.set_title("PyEdit4*")
     
-    ### new file clear editor
+    # new file clear editor
     def on_new_file(self, *args):
         if self.is_changed:
             self.maybe_saved()
@@ -496,7 +501,7 @@ class MyWindow(Gtk.Window):
             self.headerbar.set_subtitle("New")    
             self.is_changed = False
             
-    ### open file    
+    # open file    
     def on_open(self, *args):       
         if self.is_changed:
             self.maybe_saved()
@@ -505,7 +510,8 @@ class MyWindow(Gtk.Window):
         else:
             self.on_open_file()
             self.is_changed = False
-                
+
+    # open file dialog    
     def on_open_file(self, *args):
         myfile = ""
         dlg = Gtk.FileChooserDialog(title="Please choose a file", parent=None, action = 0)
@@ -529,7 +535,7 @@ class MyWindow(Gtk.Window):
             copyfile(myfile, dst)
             self.open_file(myfile)
 
-    ### file save as ...
+    # file save as ...
     def on_save_file(self, *args):
         myfile = ""
         dlg = Gtk.FileChooserDialog(title="Please choose a file", parent=None, action = 1)
@@ -570,7 +576,7 @@ class MyWindow(Gtk.Window):
                 self.ordered_list()
                 self.fill_def_btn()
                 
-    ### save current file            
+    # save current file            
     def save_file(self, *args):
         myfile = self.current_file
         if not myfile == "":
@@ -589,7 +595,7 @@ class MyWindow(Gtk.Window):
             self.on_save_file()
         return True
 
-    ### ask to save changes
+    # ask to save changes
     def maybe_saved(self, *args):
         print("is modified", self.is_changed)
         md = Gtk.MessageDialog(title="PyEdit4", 
@@ -611,7 +617,7 @@ class MyWindow(Gtk.Window):
             return True
         md.destroy()
         
-    ### close window
+    # close window
     def on_close(self, *args):
         print("goodbye ...")
         self.write_settings()
@@ -625,7 +631,8 @@ class MyWindow(Gtk.Window):
                 Gtk.main_quit()
         else:
             Gtk.main_quit()
-    
+
+    # run script
     def on_run(self, *args):
         # check code exists
         code = self.get_buffer()
@@ -653,29 +660,45 @@ class MyWindow(Gtk.Window):
     def on_fm(self, *args):
         wd = path.dirname(self.current_file)
         run(["xdg-open", wd])
-        
+
+    # set comment / remove comment    
     def on_toggle_comment(self, *args):
-        mark = self.buffer.get_insert()
-        iter = self.buffer.get_iter_at_mark(mark)
-        line_number = iter.get_line()
-        cursor = self.buffer.get_iter_at_line(line_number)
-        cursor.backward_sentence_starts(0)
-        self.buffer.place_cursor(cursor)
-        mark = self.buffer.get_insert()
-        iter = self.buffer.get_iter_at_mark(mark)
-        if not iter.get_char() == "#":
-            self.buffer.insert(iter, "#")
-        else:
+        if self.buffer.get_has_selection():
+            # block comment / uncomment
+            buf_list = []
+            buf_old = self.get_selected_buffer()
+            self.buffer.delete_selection(True, True)
+            for line in buf_old.splitlines():
+                if not line.startswith("#"):
+                    buf_list.append(f"#{line}")
+                else:
+                    buf_list.append(f"{line[1:]}")
+            buf_new = "\n".join(buf_list)        
+            self.buffer.insert_at_cursor(buf_new, -1)
+        else:     
+            # single line comment / uncomment
             mark = self.buffer.get_insert()
             iter = self.buffer.get_iter_at_mark(mark)
             line_number = iter.get_line()
             cursor = self.buffer.get_iter_at_line(line_number)
-            cursor.forward_cursor_positions(1)
+            cursor.backward_sentence_starts(0)
             self.buffer.place_cursor(cursor)
-            next_mark = self.buffer.get_insert()
-            next_iter = self.buffer.get_iter_at_mark(next_mark)
-            self.buffer.delete(iter,next_iter)
-            
+            mark = self.buffer.get_insert()
+            iter = self.buffer.get_iter_at_mark(mark)
+            if not iter.get_char() == "#":
+                self.buffer.insert(iter, "#")
+            else:
+                mark = self.buffer.get_insert()
+                iter = self.buffer.get_iter_at_mark(mark)
+                line_number = iter.get_line()
+                cursor = self.buffer.get_iter_at_line(line_number)
+                cursor.forward_cursor_positions(1)
+                self.buffer.place_cursor(cursor)
+                next_mark = self.buffer.get_insert()
+                next_iter = self.buffer.get_iter_at_mark(next_mark)
+                self.buffer.delete(iter,next_iter)
+     
+    # find from searchbar 
     def find_next_match_from_entry(self, *args):
         search_str =  self.searchbar.get_text()
         self.search_settings.set_search_text(search_str)
@@ -689,6 +712,7 @@ class MyWindow(Gtk.Window):
             self.buffer.select_range(start_iter, end_iter)
             self.editor.scroll_to_iter(end_iter, 0.1, True, 0.0, 0.1)
 
+    # find next from selected
     def find_next_match(self, *args):
         if self.buffer.get_has_selection():
             a,b  = self.buffer.get_selection_bounds()
@@ -703,7 +727,8 @@ class MyWindow(Gtk.Window):
                 self.buffer.move_mark(self.search_mark, end_iter)
                 self.buffer.select_range(start_iter, end_iter)
                 self.editor.scroll_to_iter(end_iter, 0.1, True, 0.0, 0.1)
-        
+                
+    # find previous from selected    
     def find_previous_match(self, *args):
         if self.buffer.get_has_selection():
             a,b  = self.buffer.get_selection_bounds()
@@ -719,6 +744,7 @@ class MyWindow(Gtk.Window):
                 self.buffer.select_range(start_iter, end_iter)
                 self.editor.scroll_to_iter(end_iter, 0.1, True, 0.0, 0.1)
 
+    # go to line
     def on_goto_line(self, *args):
         print("editing_done")
         line_number = int(self.entry_goto.get_text()) - 1
@@ -728,7 +754,8 @@ class MyWindow(Gtk.Window):
         mark = self.buffer.get_insert()
         iter = self.buffer.get_iter_at_mark(mark)        
         self.editor.scroll_to_iter(iter, 0.0, True, 0.0, 0.0)
-        
+
+    # about dialog
     def on_about(self, *args):
         dialog = Gtk.AboutDialog()
         dialog.set_title("PyEdit4")
@@ -746,7 +773,8 @@ class MyWindow(Gtk.Window):
         dialog.set_modal(True)
         dialog.connect('response', lambda dialog, data: dialog.destroy())
         dialog.show_all()
-        
+
+    # read config
     def read_settings(self, *args):
         if self.config.has_section("window"):
             x, y, w, h = (self.config['window']['left'], self.config['window']['top'], 
@@ -759,7 +787,8 @@ class MyWindow(Gtk.Window):
         if self.config.has_section("files"):
             self.lastfiles = self.config['files']['lastfiles'].split(",")
             self.ordered_list()
-            
+    
+    # write config
     def write_settings(self, *args):
         self.config['window']['left'] = str(self.win.get_position()[0])
         self.config['window']['top'] = str(self.win.get_position()[1])
@@ -769,9 +798,9 @@ class MyWindow(Gtk.Window):
         self.config['files']['lastfiles'] = ",".join(self.lastfiles)
         with open('config.conf', 'w') as configfile:
             self.config.write(configfile)
-            
+
+    # check code for unused imports / errors
     def on_check_code(self, *args):
-        #if not self.get_buffer() == self.new_text:
         if not self.current_file == "":
             wd = path.dirname(sys.argv[0])
             check = path.join(wd, "checkmycode")
@@ -779,16 +808,19 @@ class MyWindow(Gtk.Window):
             run(cmd, shell = True)
         else:
             self.status_label.set_text("no code!")
-            
+
+    # clean recent files list
     def ordered_list(self, *args):
         for i in self.recent_menu.get_children():
             self.recent_menu.remove(i)
         self.lastfiles = [x for x in self.lastfiles if x]
+        #self.lastfiles = self.lastfiles[:10]
         self.lastfiles = self.ordered_set(self.lastfiles)
         for line in self.lastfiles:
-            menuitem = Gtk.MenuItem(line)
-            menuitem.connect("activate", self.on_menuitem_activated)
-            self.recent_menu.append(menuitem)
+            if not line.startswith("/tmp"):
+                menuitem = Gtk.MenuItem(line)
+                menuitem.connect("activate", self.on_menuitem_activated)
+                self.recent_menu.append(menuitem)
         self.recent_menu.show_all()
             
         
@@ -800,7 +832,8 @@ class MyWindow(Gtk.Window):
                 out_list.append(val)
                 added.add(val)
         return out_list
-        
+
+    # color dialog    
     def on_get_color(self, *args): 
         colorchooserdialog = Gtk.ColorChooserDialog()
         colorchooserdialog.set_property("show-editor", False)
@@ -815,12 +848,14 @@ class MyWindow(Gtk.Window):
             self.buffer.insert_at_cursor(col, -1)
             self.editor.grab_focus() 
         colorchooserdialog.destroy()
-        
+
+    # get selected text
     def get_selected_buffer(self, *args):
         a,b  = self.buffer.get_selection_bounds()
         sel_text = self.buffer.get_text(a, b, True)
         return (sel_text) 
 
+    # recent files menu
     def on_menuitem_activated(self, menuitem, *args):
         if self.is_changed:
             self.maybe_saved()
@@ -829,25 +864,29 @@ class MyWindow(Gtk.Window):
             self.open_file(myfile) 
         else:
             self.message_dialog("File does not exist")
-            
+
+    # styles menu
     def on_styles_activated(self, menuitem, *args):
         style = menuitem.get_label()
         scheme = self.stylemanager.get_scheme(style) 
         self.buffer.set_style_scheme(scheme)
         print(self.buffer.get_style_scheme().get_id())
-        
+
+    # templates menu    
     def on_templates_activated(self, menuitem, *args):
         text_to_insert = open(f"templates/{menuitem.get_label()}.txt").read()
         self.buffer.insert_at_cursor(text_to_insert)
         self.fill_def_btn()
-        
+
+    # message dialog    
     def message_dialog(self, message, *args):
         dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.INFO,
                                     Gtk.ButtonsType.OK, "Message")
         dialog.format_secondary_text(message)
         dialog.run()
         dialog.destroy() 
-        
+
+    # show devhelp    
     def show_dev_help(self, *args):
         if self.can_devhelp:
             help_text = self.get_selected_buffer()
@@ -855,15 +894,18 @@ class MyWindow(Gtk.Window):
 
     def on_resize(self, *args):
         print("move-handle")
-        
+
+    # indent lines    
     def on_indent_lines(self, *args):
         a,b  = self.buffer.get_selection_bounds()
         self.editor.indent_lines(a, b)
         
+    # unindent lines 
     def on_unindent_lines(self, *args):
         a,b  = self.buffer.get_selection_bounds()
         self.editor.unindent_lines(a, b)
-        
+
+    # fill classes / def menu
     def fill_def_btn(self, *args):
         for i in self.def_menu.get_children():
             self.def_menu.remove(i)
@@ -875,6 +917,7 @@ class MyWindow(Gtk.Window):
                 self.def_menu.append(menuitem)
         self.def_menu.show_all()     
 
+    # classes / def menu
     def on_def_activated(self, menuitem, *args):
         def_text = menuitem.get_label()
         start_iter =  self.buffer.get_start_iter()
