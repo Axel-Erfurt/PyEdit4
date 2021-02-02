@@ -12,7 +12,13 @@ Python Editor written in python Gtk3
 
 You can add Code Snippets as .txt files in the _templates_ folder
 
+### Shortcuts
+
+- Ctrl+O -> open file
+- Ctrl+S -> save file
+- Ctrl+N -> new file
 - Ctrl+F -> find
+
 - F1 ->  show help for selected, needs devhelp
 - F2 ->  toggle comment on line (or on multiple lines)
 - F3 ->  set selected text in (round) brackets
