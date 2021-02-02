@@ -368,7 +368,13 @@ class MyWindow(Gtk.Window):
             self.on_unindent_lines()
         if (event.keyval == Gdk.keyval_from_name("F8")):
             self.on_indent_lines()
-
+        if (event.keyval == Gdk.keyval_from_name("F3")):
+            self.on_set_brakckets()
+        if (event.keyval == Gdk.keyval_from_name("F4")):
+            self.on_set_quotes()
+        if (event.keyval == Gdk.keyval_from_name("F6")):
+            self.on_set_brakckets_and_quotes()
+            
     def searchbar_key_press(self, widget, event):
         if (event.keyval == Gdk.KEY_Escape):
             self.findbox.set_visible(False)
@@ -928,6 +934,27 @@ class MyWindow(Gtk.Window):
            self.editor.scroll_to_iter(match_end, 0.0, True, 0.0, 0.0)
            self.editor.grab_focus()        
     
+    def on_set_brakckets(self, *args):
+        if self.buffer.get_has_selection():
+            sel_text = self.get_selected_buffer()
+            sel_text = f"({sel_text})"
+            self.buffer.delete_selection(True, True)
+            self.buffer.insert_at_cursor(sel_text, -1)
+            
+    def on_set_quotes(self, *args):
+        if self.buffer.get_has_selection():
+            sel_text = self.get_selected_buffer()
+            sel_text = f'"{sel_text}"'
+            self.buffer.delete_selection(True, True)
+            self.buffer.insert_at_cursor(sel_text, -1)
+            
+    def on_set_brakckets_and_quotes(self, *args):
+        if self.buffer.get_has_selection():
+            sel_text = self.get_selected_buffer()
+            sel_text = f'("{sel_text}")'
+            self.buffer.delete_selection(True, True)
+            self.buffer.insert_at_cursor(sel_text, -1)
+            
         
 if __name__ == "__main__":
     w = MyWindow()
