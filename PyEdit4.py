@@ -837,7 +837,10 @@ class MyWindow(Gtk.Window):
             check_file = "/tmp/check.txt"
             if path.isfile(check_file):
                 message = open(check_file, 'r').read()
-                self.message_dialog("Code Check", message)
+                if not message == "":
+                    self.message_dialog("Code Check", message)
+                else:
+                    self.message_dialog("Code Check", "ok!")
         else:
             self.status_label.set_text("no code!")
 
