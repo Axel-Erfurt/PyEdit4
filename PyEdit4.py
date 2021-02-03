@@ -69,6 +69,26 @@ class MyWindow(Gtk.Window):
 
     def main(self, argv):
         
+        self.help_shortcuts = """
+    Shortcuts
+    ###################
+    Ctrl+O -> open file
+    Ctrl+S -> save file
+    Ctrl+N -> new file
+    Ctrl+F -> find
+    F1 -> show help for selected, needs devhelp
+    F2 -> toggle comment on line (or on multiple lines)
+    F3 -> set selected text in (round) brackets
+    F4 -> set selected text in double quotes
+    F5 -> run Script
+    F6 -> set selected text in double quotes inside (round) brackets
+    F7 unindent selected lines
+    F8 indent selected lines
+    F9 -> find previous (selected)
+    F10 -> find next (selected)
+    ###################
+"""
+        
         self.config = configparser.ConfigParser()
         self.config.read('config.conf')
         if not self.config.has_section("window"):
@@ -288,6 +308,7 @@ class MyWindow(Gtk.Window):
         self.btn_replace_all.set_relief(Gtk.ReliefStyle.NONE)
         
         self.btn_about = builder.get_object("btn_about")
+        self.btn_about.set_tooltip_text("Info & Shortcuts")
         self.btn_about.connect('clicked', self.on_about)
         self.btn_about.set_relief(Gtk.ReliefStyle.NONE)
         
@@ -770,7 +791,8 @@ class MyWindow(Gtk.Window):
         dialog.set_authors(["Axel Schneider"])
         dialog.set_website("https://github.com/Axel-Erfurt/PyEdit4")
         dialog.set_website_label("github Project Site")
-        dialog.set_comments("Python Gtk+3 Editor")
+        comments_text = self.help_shortcuts
+        dialog.set_comments(f'Python Editor Gtk3\n{comments_text}')
         dialog.set_copyright("© 2021 Axel Schneider")
         dialog.set_license_type(Gtk.License(12))
         dialog.set_wrap_license(True)
@@ -778,7 +800,7 @@ class MyWindow(Gtk.Window):
         dialog.set_logo(pixbuf)
         dialog.set_modal(True)
         dialog.connect('response', lambda dialog, data: dialog.destroy())
-        dialog.show_all()
+        dialog.show()
 
     # read config
     def read_settings(self, *args):
@@ -809,9 +831,13 @@ class MyWindow(Gtk.Window):
     def on_check_code(self, *args):
         if not self.current_file == "":
             wd = path.dirname(sys.argv[0])
-            check = path.join(wd, "checkmycode")
+            check = path.join(wd, "check_my_code")
             cmd = f"{check} '{self.current_file}'"
             run(cmd, shell = True)
+            check_file = "/tmp/check.txt"
+            if path.isfile(check_file):
+                message = open(check_file, 'r').read()
+                self.message_dialog("Code Check", message)
         else:
             self.status_label.set_text("no code!")
 
@@ -820,9 +846,9 @@ class MyWindow(Gtk.Window):
         for i in self.recent_menu.get_children():
             self.recent_menu.remove(i)
         self.lastfiles = [x for x in self.lastfiles if x]
-        #self.lastfiles = self.lastfiles[:10]
-        self.lastfiles = self.ordered_set(self.lastfiles)
-        for line in self.lastfiles:
+        self.lastfiles = self.ordered_set(self.lastfiles)[-12:]
+        for x in range(len(self.lastfiles)):
+            line = self.lastfiles[x]
             if not line.startswith("/tmp"):
                 menuitem = Gtk.MenuItem(line)
                 menuitem.connect("activate", self.on_menuitem_activated)
@@ -869,7 +895,7 @@ class MyWindow(Gtk.Window):
         if path.isfile(myfile):
             self.open_file(myfile) 
         else:
-            self.message_dialog("File does not exist")
+            self.message_dialog("Open File", "File does not exist")
 
     # styles menu
     def on_styles_activated(self, menuitem, *args):
@@ -885,9 +911,9 @@ class MyWindow(Gtk.Window):
         self.fill_def_btn()
 
     # message dialog    
-    def message_dialog(self, message, *args):
+    def message_dialog(self, title, message, *args):
         dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.INFO,
-                                    Gtk.ButtonsType.OK, "Message")
+                                    Gtk.ButtonsType.OK, title)
         dialog.format_secondary_text(message)
         dialog.run()
         dialog.destroy() 
