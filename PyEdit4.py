@@ -667,18 +667,20 @@ class MyWindow(Gtk.Window):
             if self.is_changed:
                 self.save_file()
                 
+            # store clip text for later
+            old_clip = self.cb.wait_for_text ()
             # set working dir
             wd = path.dirname(self.current_file)
-            self.cb.set_text(f"cd {wd}", -1)
-            self.terminal.paste_clipboard()
-            self.terminal.feed_child([13])
-            # run script
-            cmd = f"python3 '{self.current_file}'"
+            filename = path.split(self.current_file)[1]
+            print(filename)
+            cmd = f"cd '{wd}' && python3 './{filename}'"
             print(cmd)
             self.cb.set_text(cmd, -1)
             self.terminal.paste_clipboard()
             self.terminal.grab_focus()
             self.terminal.feed_child([13])
+            # clip text for later
+            self.cb.set_text(old_clip, -1)
         else:
             self.status_label.set_text("no code to execute!")
         self.editor.grab_focus()
