@@ -8,6 +8,14 @@ Python Editor written in python Gtk3
 - [pyflakes](https://pypi.org/project/pyflakes/) and [zenity](https://help.gnome.org/users/zenity/stable/) (for code check)
 - devhelp (for help)
 
+### Usage
+
+```
+git clone https://github.com/Axel-Erfurt/PyEdit4.git
+cd PyEdit4
+python3 ./PyEdit4.py
+```
+
 ![alt](https://raw.githubusercontent.com/Axel-Erfurt/PyEdit4/main/screenshot.png)
 
 You can add Code Snippets as .txt files in the _templates_ folder
