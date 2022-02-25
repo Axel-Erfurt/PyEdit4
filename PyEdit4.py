@@ -4,12 +4,7 @@
 ### created in January 2021 by Axel Schneider
 ### https://github.com/Axel-Erfurt/
 import gi
-
-gi.require_version("Gtk", "3.0")
-gi.require_version("Gdk", "3.0")
-gi.require_version('Keybinder', '3.0')
-gi.require_version('GtkSource', '3.0')
-gi.require_version('Vte', '2.91')
+gi.require_versions({'Gtk': '3.0', 'Gdk': '3.0', 'Keybinder': '3.0', 'GtkSource': '3.0', 'Vte': '2.91'})
 from gi.repository import Gtk, Gdk, GLib, GtkSource, GObject, Vte, GdkPixbuf
 import sys
 from subprocess import run, Popen
@@ -208,7 +203,8 @@ class MyWindow(Gtk.Window):
         self.text_completion.add_provider(self.view_provider) 
         
         keyword_provider = GtkSource.CompletionWords.new('keywords')
-        keyword_provider.props.minimum_word_size = 2
+        #keyword_provider.props.minimum_word_size = 2
+        keyword_provider.props.activation = 1
         keyword_buffer = GtkSource.Buffer()
         # load words from file
         keywords = open("wordlist.txt", 'r').read()
@@ -313,7 +309,15 @@ class MyWindow(Gtk.Window):
         self.btn_about.set_relief(Gtk.ReliefStyle.NONE)
         
         self.headerbar = builder.get_object("headerbar")
-        
+#        self.headerbar.set_show_close_button(False)
+#
+#        button = Gtk.Button()
+#        button.set_relief(Gtk.ReliefStyle.NONE)
+#        img = Gtk.Image.new_from_file("window-close.svg")
+#        button.set_image(img)
+#        button.connect("clicked", Gtk.main_quit)
+#        self.headerbar.pack_start(button)
+
         self.status_label = builder.get_object("status_label")
         
         self.file_filter_text = Gtk.FileFilter()
@@ -432,7 +436,8 @@ class MyWindow(Gtk.Window):
                 self.headerbar.set_title("PyEdit4")
                 self.editor.grab_focus()
                 self.is_changed = False
-                self.lastfiles.append(myfile)
+                if not myfile in self.lastfiles:
+                    self.lastfiles.insert(0, myfile)
                 self.ordered_list()
                 self.terminal.reset(True, True)
                 self.fill_def_btn()
@@ -662,11 +667,12 @@ class MyWindow(Gtk.Window):
     # run script
     def on_run(self, *args):
         # check code exists
+        
         code = self.get_buffer()
         if not code == self.new_text:
             if self.is_changed:
                 self.save_file()
-                
+            self.terminal.reset(True, True)
             # store clip text for later
             old_clip = self.cb.wait_for_text ()
             # set working dir
@@ -775,14 +781,17 @@ class MyWindow(Gtk.Window):
 
     # go to line
     def on_goto_line(self, *args):
-        print("editing_done")
-        line_number = int(self.entry_goto.get_text()) - 1
-        cursor = self.buffer.get_iter_at_line(line_number)
-        cursor.backward_sentence_starts(0)
-        self.buffer.place_cursor(cursor)
-        mark = self.buffer.get_insert()
-        iter = self.buffer.get_iter_at_mark(mark)        
-        self.editor.scroll_to_iter(iter, 0.0, True, 0.0, 0.0)
+        if self.entry_goto.get_text() == "":
+            return
+        else:
+            if int(self.entry_goto.get_text()) > 0:
+                line_number = int(self.entry_goto.get_text()) - 1
+                cursor = self.buffer.get_iter_at_line(line_number)
+                cursor.backward_sentence_starts(0)
+                self.buffer.place_cursor(cursor)
+                mark = self.buffer.get_insert()
+                iter = self.buffer.get_iter_at_mark(mark)        
+                self.editor.scroll_to_iter(iter, 0.0, True, 0.0, 0.0)
 
     # about dialog
     def on_about(self, *args):
@@ -813,7 +822,8 @@ class MyWindow(Gtk.Window):
             self.win.move(int(x), int(y))
             style = self.config['window']['style']
             scheme = self.stylemanager.get_scheme(style) 
-            self.buffer.set_style_scheme(scheme)           
+            self.buffer.set_style_scheme(scheme)
+
         if self.config.has_section("files"):
             self.lastfiles = self.config['files']['lastfiles'].split(",")
             self.ordered_list()
@@ -851,13 +861,14 @@ class MyWindow(Gtk.Window):
         for i in self.recent_menu.get_children():
             self.recent_menu.remove(i)
         self.lastfiles = [x for x in self.lastfiles if x]
-        self.lastfiles = self.ordered_set(self.lastfiles)[-12:]
+        #self.lastfiles = self.ordered_set(self.lastfiles)[:12]
         for x in range(len(self.lastfiles)):
-            line = self.lastfiles[x]
-            if not line.startswith("/tmp"):
-                menuitem = Gtk.MenuItem(line)
-                menuitem.connect("activate", self.on_menuitem_activated)
-                self.recent_menu.append(menuitem)
+            if x < 16:
+                line = self.lastfiles[x]
+                if not line.startswith("/tmp"):
+                    menuitem = Gtk.MenuItem(line)
+                    menuitem.connect("activate", self.on_menuitem_activated)
+                    self.recent_menu.append(menuitem)
         self.recent_menu.show_all()
             
         
@@ -866,7 +877,7 @@ class MyWindow(Gtk.Window):
         added = set()
         for val in in_list:
             if not val in added:
-                out_list.append(val)
+                out_list.insert(0, val)
                 added.add(val)
         return out_list
 
@@ -908,6 +919,9 @@ class MyWindow(Gtk.Window):
         scheme = self.stylemanager.get_scheme(style) 
         self.buffer.set_style_scheme(scheme)
         print(self.buffer.get_style_scheme().get_id())
+        for menus in self.styles_menu:
+            menus.deselect()
+        menuitem.select()
 
     # templates menu    
     def on_templates_activated(self, menuitem, *args):
